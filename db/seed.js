@@ -35,16 +35,28 @@ async function createTables(){
 
 async function testDB() {
     try {
-        console.log("Starting to test database...")
+        console.log("Starting to test database...");
+
+        console.log("Calling getAllUsers");
         const users = await getAllUsers()
-        console.log(users)
-        console.log("Finished database testing...")
+        console.log("Result:", users);
+
+        console.log("Calling updateUser on users[0]")
+        const updateUserResult = await updateUser(users[0].id, {
+            name: "Newname Sogood",
+            location: "Lesterville, KY"
+        });
+        console.log("Result:", updateUserResult);
+
+        console.log("Finished database testing...");
     }
     catch (error){
-        console.error("ERROR testing database!")
-        throw error
+        console.error("ERROR testing database!");
+        throw error;
     }
 }
+
+
 
 async function createInitialUsers(){
     try{
