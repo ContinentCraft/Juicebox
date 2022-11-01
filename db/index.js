@@ -1,6 +1,34 @@
 const { Client } = require('pg')
 const client = new Client('postgres://localhost:5432/juicebox-dev')
 
+
+
+
+// stuff above here
+
+const apiRouter = require('./api');
+server.use('/api', apiRouter);
+
+// stuff below here
+
+
+
+
+
+
+
+
+
+const PORT = 3000;
+const express = require('express');
+const server = express();
+
+server.listen(PORT, () => {
+  console.log('The server is up on port', PORT)
+});
+
+
+
 async function getAllUsers(){
     const { rows } = await client.query(`SELECT id, username FROM users;`)
     return rows
