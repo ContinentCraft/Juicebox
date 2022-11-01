@@ -1,5 +1,6 @@
 const { client, getAllUsers, createUser, updateUser,
-    getAllPosts, createPost, updatePost
+    getAllPosts, createPost, updatePost, getAllUsers, 
+    getUserById, getPostsByUser
 } = require('./index')
 
 async function dropTables(){
@@ -46,6 +47,62 @@ async function createTables(){
     }
 }
 
+async function createTags(tagList) {
+    if (tagList.length === 0){
+        return;
+    }
+
+    // need something like: $1), ($2), ($3 
+    const insertValues = tagList.map(
+        (_, index) => `$${index +1}`).join('), (');
+
+      // then we can use: (${ insertValues }) in our string template
+
+      // need something like $1, $2, $3
+
+    const selectValues = tagList.map(
+        (_, index) => `$${index + 1}`).join(', ');
+
+    // then we can use (${ selectValues }) in our string template
+
+  try {
+    // insert the tags, doing nothing on conflict
+    // returning nothing, we'll query after
+
+    // select all tags where the name is in our taglist
+    // return the rows from the query
+  } catch (error) {
+    throw error;
+  }
+}
+    
+    
+async function createInitialTags() {
+    try {
+      console.log("Starting to create tags...");
+  
+      const [happy, sad, inspo, catman] = await createTags([
+        '#happy', 
+        '#worst-day-ever', 
+        '#youcandoanything',
+        '#catmandoeverything'
+      ]);
+  
+      const [postOne, postTwo, postThree] = await getAllPosts();
+  
+      await addTagsToPost(postOne.id, [happy, inspo]);
+      await addTagsToPost(postTwo.id, [sad, inspo]);
+      await addTagsToPost(postThree.id, [happy, catman, inspo]);
+  
+      console.log("Finished creating tags!");
+    } catch (error) {
+      console.log("Error creating tags!");
+      throw error;
+    }
+  }
+
+
+
 async function createInitialUsers(){
     try{
         console.log("Starting to create users...")
@@ -88,9 +145,11 @@ async function getPostsByUser(userId){
     }
 }
 
+//asking to put getPostsByUser into index.js according to tutorial
+
 async function createInitialPosts(){
     try{
-        const [albert, sandra, glamgal] = await getAllUsers()
+        const [albert, sandra, glamgal] = await getAllUsers();
         const test = await createPost({
             authorId: albert.id,
             title: 'First Post',
@@ -101,6 +160,27 @@ async function createInitialPosts(){
         throw error
     }
 }
+
+// await createPost({
+//     authorId: sandra.id,
+//     title: "How does this work?",
+//     content: "Seriously, does this even do anything?"
+//   });
+
+//   await createPost({
+//     authorId: glamgal.id,
+//     title: "Living the Glam Life",
+//     content: "Do you even? I swear that half of you are posing."
+//   });
+//   console.log("Finished creating posts!");
+// } catch (error) {
+//   console.log("Error creating posts!");
+//   throw error;
+// }
+// }
+
+
+
 
 async function getUserById(userId){
     const { rows } = await client.query(`
@@ -113,6 +193,8 @@ async function getUserById(userId){
     rows[0].posts = JSON.stringify(userPosts)
     return {rows}
 }
+
+// tutorial is saying they want getUserById in index.js
 
 async function testDB() {
     try {
@@ -152,13 +234,53 @@ async function testDB() {
     }
 }
 
+
+async function getPostsByUser(userId) {
+    try {
+      const { rows: postIds } = await client.query(`
+        SELECT id 
+        FROM posts 
+        WHERE "authorId"=${ userId };
+      `);
+  
+      const posts = await Promise.all(postIds.map(
+        post => getPostById( post.id )
+      ));
+  
+      return posts;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async function getAllPosts() {
+    try {
+      const { rows: postIds } = await client.query(`
+        SELECT id
+        FROM posts;
+      `);
+  
+      const posts = await Promise.all(postIds.map(
+        post => getPostById( post.id )
+      ));
+  
+      return posts;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  
+
 async function rebuildDB(){
     try{
         client.connect()
+
         await dropTables()
         await createTables()
         await createInitialUsers()
         await createInitialPosts()
+        await createInitialTags();
     }
     catch(error){
         console.error(error)
