@@ -1,4 +1,4 @@
-const { client, getAllUsers, createUser, updateUser, createPost, updatePost
+const { client, getAllUsers, createUser, updateUser, createPost, updatePost, getPostById
 } = require('./index')
 
 async function dropTables(){
@@ -81,11 +81,11 @@ async function createTags(tagList) {
 
   try {
     const { rows } = await client.query(`
-        INSERT INTO tags(name),
-        VALUES ($1), ($2), ($3),
-        ON CONFLICT (name) DO NOTHING,
-        SELECT * FROM tags,
-        WHERE name,
+        INSERT INTO tags(name)
+        VALUES ($1), ($2), ($3)
+        ON CONFLICT (name) DO NOTHING
+        SELECT * FROM tags
+        WHERE name
         IN ($1, $2, $3);
     `)
     return rows
@@ -117,6 +117,7 @@ async function createInitialTags() {
       await addTagsToPost(postOne.id, [happy, inspo]);
       await addTagsToPost(postTwo.id, [sad, inspo]);
       await addTagsToPost(postThree.id, [happy, catman, inspo]);
+
       console.log(happy, sad, inspo, catman, "!^2")
       console.log("Finished creating tags!");
     } catch (error) {
@@ -157,52 +158,52 @@ async function createInitialUsers(){
     }
 }
 
-async function getPostsByUser(userId){
-    try{
-        const { rows } = await client.query(`
-            SELECT * FROM posts WHERE authorId=${userId}
-        `)
-        return rows
-    }
-    catch(error){
-        throw error
-    }
-}
+// async function getPostsByUser(userId){
+//     try{
+//         const { rows } = await client.query(`
+//             SELECT * FROM posts WHERE authorId=${userId}
+//         `)
+//         return rows
+//     }
+//     catch(error){
+//         throw error
+//     }
+// }
 
 //asking to put getPostsByUser into index.js according to tutorial
 
 async function createInitialPosts(){
     try{
         const [albert, sandra, glamgal] = await getAllUsers();
-        const test = await createPost({
+
+        console.log("Starting to create posts...");
+        await createPost({
             authorId: albert.id,
-            title: 'First Post',
-            content: 'My 1st post!'
-        })
-    }
-    catch(error){
-        throw error
-    }
-}
+            title: "First Post",
+            content: "This is my first post. I hope I love writing blogs as much as I love writing them.",
+            tags: ["#happy", "#youcandoanything"]
+          });
 
-// await createPost({
-//     authorId: sandra.id,
-//     title: "How does this work?",
-//     content: "Seriously, does this even do anything?"
-//   });
+        await createPost({
+            authorId: sandra.id,
+            title: "How does this work?",
+            content: "Seriously, does this even do anything?",
+            tags: ["#happy", "#worst-day-ever"]
+          });
 
-//   await createPost({
-//     authorId: glamgal.id,
-//     title: "Living the Glam Life",
-//     content: "Do you even? I swear that half of you are posing."
-//   });
-//   console.log("Finished creating posts!");
-// } catch (error) {
-//   console.log("Error creating posts!");
-//   throw error;
-// }
-// }
-
+        await createPost({
+            authorId: glamgal.id,
+            title: "Living the Glam Life",
+            content: "Do you even? I swear that half of you are posing.",
+            tags: ["#happy", "#youcandoanything", "#canmandoeverything"]
+          });
+          
+          console.log("Finished creating posts!");
+        } catch (error) {
+          console.log("Error creating posts!");
+          throw error;
+        }
+      }
 
 
 
@@ -262,8 +263,7 @@ async function testDB() {
 async function getPostsByUser(userId) {
     try {
       const { rows: postIds } = await client.query(`
-        SELECT id 
-        FROM posts 
+        SELECT id FROM posts 
         WHERE "authorId"=${ userId };
       `);
   
@@ -280,8 +280,7 @@ async function getPostsByUser(userId) {
   async function getAllPosts() {
     try {
       const { rows: postIds } = await client.query(`
-        SELECT id
-        FROM posts;
+        SELECT id FROM posts;
       `);
   
       const posts = await Promise.all(postIds.map(

@@ -28,8 +28,7 @@ async function getAllUsers() {
     try {
     const { rows } = await client.query
     (`
-    SELECT id, username, name, location, active
-    FROM users;
+    SELECT id, username, name, location, active FROM users;
     `);
     return rows;
    } catch(error) {
@@ -43,8 +42,7 @@ async function getAllUsers() {
 async function getAllUsers(){
     try{
         const { rows } = await client.query(`
-        SELECT id, username, name, location, active
-        FROM users;
+        SELECT id, username, name, location, active FROM users;
         `);
 
     return rows;
@@ -112,7 +110,8 @@ async function getAllPosts() {
 async function createPost({
     authorId,
     title,
-    content
+    content,
+    tags = []
 }){
     try{
         const { rows: [ post ] } = await client.query(`
@@ -149,7 +148,7 @@ async function updatePost(id, fields = {
             RETURNING *;
             `, Object.values(fields));
 
-        return rows;
+        return {rows: [ post ]};
     }
     catch(error){
         throw error
@@ -171,21 +170,18 @@ async function createPostTag(postId, tagId) {
 async function getPostById(postId) {
     try {
       const { rows: [ post ]  } = await client.query(`
-        SELECT *
-        FROM posts
+        SELECT * FROM posts
         WHERE id=$1;
       `, [postId]);
   
       const { rows: tags } = await client.query(`
-        SELECT tags.*
-        FROM tags
+        SELECT tags.* FROM tags
         JOIN post_tags ON tags.id=post_tags."tagId"
         WHERE post_tags."postId"=$1;
       `, [postId])
   
       const { rows: [author] } = await client.query(`
-        SELECT id, username, name, location
-        FROM users
+        SELECT id, username, name, location FROM users
         WHERE id=$1;
       `, [post.authorId])
   
@@ -217,7 +213,13 @@ async function addTagsToPost(postId, tagList) {
   }
 
 
+
+
+
+
+
+
 module.exports = {
     client, getAllUsers, createUser, updateUser, getAllPosts, createPost,
-    updatePost
+    updatePost, getPostById
 }
