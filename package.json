@@ -1,7 +1,6 @@
 {
   "name": "juicebox",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "seed:dev": "nodemon ./db/seed.js",
@@ -16,5 +15,14 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ContinentCraft/Juicebox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ContinentCraft/Juicebox/issues"
+  },
+  "homepage": "https://github.com/ContinentCraft/Juicebox#readme",
+  "description": ""
 }

@@ -1,13 +1,15 @@
-const { client, getAllUsers, createUser, updateUser,
-    getAllPosts, createPost, updatePost, getAllUsers, 
-    getUserById, getPostsByUser
+const { client, getAllUsers, createUser, updateUser, createPost, updatePost
 } = require('./index')
 
 async function dropTables(){
     try{
         console.log("Starting to drop tables...")
-        await client.query(`DROP TABLE IF EXISTS posts;`)
-        await client.query(`DROP TABLE IF EXISTS users;`)
+        await client.query(`
+            DROP TABLE IF EXISTS post_tags;
+            DROP TABLE IF EXISTS tags;
+            DROP TABLE IF EXISTS posts;
+            DROP TABLE IF EXISTS users;
+        `)
         console.log("Finished dropping tables...")
     }
     catch(error){
@@ -35,6 +37,17 @@ async function createTables(){
                 content TEXT NOT NULL,
                 active BOOLEAN DEFAULT true
             );
+            CREATE TABLE tags (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                active BOOLEAN DEFAULT true
+            );
+            CREATE TABLE post_tags (
+                "postId" INTEGER REFERENCES posts(id),
+                "tagId" INTEGER REFERENCES tags(id),
+                UNIQUE ("postId", "tagId"),
+                active BOOLEAN DEFAULT true
+            );
         `)
         console.log("Finished building tables...")
     }
@@ -48,8 +61,9 @@ async function createTables(){
 }
 
 async function createTags(tagList) {
+    console.log(tagList, "$")
     if (tagList.length === 0){
-        return;
+        return
     }
 
     // need something like: $1), ($2), ($3 
@@ -66,6 +80,15 @@ async function createTags(tagList) {
     // then we can use (${ selectValues }) in our string template
 
   try {
+    const { rows } = await client.query(`
+        INSERT INTO tags(name),
+        VALUES ($1), ($2), ($3),
+        ON CONFLICT (name) DO NOTHING,
+        SELECT * FROM tags,
+        WHERE name,
+        IN ($1, $2, $3);
+    `)
+    return rows
     // insert the tags, doing nothing on conflict
     // returning nothing, we'll query after
 
@@ -80,6 +103,7 @@ async function createTags(tagList) {
 async function createInitialTags() {
     try {
       console.log("Starting to create tags...");
+
   
       const [happy, sad, inspo, catman] = await createTags([
         '#happy', 
@@ -93,10 +117,10 @@ async function createInitialTags() {
       await addTagsToPost(postOne.id, [happy, inspo]);
       await addTagsToPost(postTwo.id, [sad, inspo]);
       await addTagsToPost(postThree.id, [happy, catman, inspo]);
-  
+      console.log(happy, sad, inspo, catman, "!^2")
       console.log("Finished creating tags!");
     } catch (error) {
-      console.log("Error creating tags!");
+      console.log("ERROR creating tags!");
       throw error;
     }
   }
