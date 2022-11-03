@@ -7,7 +7,11 @@ usersRouter.use((req, res, next) => {
   next(); // THIS IS DIFFERENT
 });
 
-usersRouter.get('/', (req, res) => {
+const { getAllUsers } = require('../db');
+
+usersRouter.get('/', async (req, res) => {
+  const users = await getAllUsers();
+
   res.send({
     users: []
   });
