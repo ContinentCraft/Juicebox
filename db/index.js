@@ -15,7 +15,12 @@ async function getAllUsers() {
 }
 
 
-// guide is saying they want getUserById in index.js
+
+
+
+
+
+
 
 async function getUserById(userId){
     const { rows } = await client.query(`
@@ -170,6 +175,8 @@ async function getAllPosts() {
     }
 }
 
+//createPost function
+
 async function createPost({
     authorId,
     title,
@@ -187,9 +194,11 @@ async function createPost({
         return await addTagsToPost(post.id, tagList);
     }
     catch(error){
-        throw error
+        throw error;
     }
 }
+
+//createpost function
 
 async function updatePost(postId, fields = {
     title,
@@ -273,7 +282,15 @@ async function getPostById(postId) {
         SELECT * FROM posts
         WHERE id=$1;
       `, [postId]);
-  
+
+      // - new
+      if (!post) {
+        throw {
+          name: "PostNotFoundError",
+          message: "Could not find a post with that postId"
+        };
+      }
+
       const { rows: tags } = await client.query(`
         SELECT tags.* FROM tags
         JOIN post_tags ON tags.id=post_tags."tagId"
@@ -357,6 +374,7 @@ async function getUserByUsername(username) {
     throw error;
   }
 }
+
 
 module.exports = {
     client, getAllUsers, createUser, createTags, 
